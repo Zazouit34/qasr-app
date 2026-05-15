@@ -1,9 +1,10 @@
 "use client";
-import React, { useEffect, useRef, useState,useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { useI18n } from "@/context/I18nContext";
 import {
   BoxCubeIcon,
   CalenderIcon,
@@ -26,77 +27,114 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-  },
-];
-
-const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
-  },
-];
-
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+  const { t } = useI18n();
+
+  const mainNav = useMemo(
+    (): NavItem[] => [
+      {
+        icon: <GridIcon />,
+        name: t("nav.dashboard"),
+        path: "/",
+      },
+      {
+        icon: <CalenderIcon />,
+        name: t("nav.events"),
+        subItems: [
+          { name: t("nav.eventsAll"), path: "/events", pro: false },
+          { name: t("nav.eventsNew"), path: "/events/new", pro: false },
+          { name: t("nav.calendar"), path: "/calendar", pro: false },
+        ],
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: t("nav.clients"),
+        path: "/clients",
+      },
+      {
+        icon: <TableIcon />,
+        name: t("nav.payments"),
+        path: "/payments",
+      },
+      {
+        icon: <ListIcon />,
+        name: t("nav.services"),
+        path: "/services",
+      },
+      {
+        icon: <BoxCubeIcon />,
+        name: t("nav.amenities"),
+        path: "/amenities",
+      },
+      {
+        icon: <PageIcon />,
+        name: t("nav.packages"),
+        path: "/packages",
+      },
+      {
+        icon: <TableIcon />,
+        name: t("nav.quotes"),
+        path: "/quotes",
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: t("nav.staff"),
+        path: "/staff",
+      },
+      {
+        icon: <TableIcon />,
+        name: t("nav.expenses"),
+        path: "/expenses",
+      },
+      {
+        icon: <PieChartIcon />,
+        name: t("nav.reports"),
+        path: "/reports",
+      },
+      {
+        icon: <PlugInIcon />,
+        name: t("nav.settings"),
+        path: "/settings",
+      },
+    ],
+    [t]
+  );
+
+  const othersNav = useMemo(
+    (): NavItem[] => [
+      {
+        icon: <PieChartIcon />,
+        name: t("nav.charts"),
+        subItems: [
+          { name: t("nav.chartsLine"), path: "/line-chart", pro: false },
+          { name: t("nav.chartsBar"), path: "/bar-chart", pro: false },
+        ],
+      },
+      {
+        icon: <BoxCubeIcon />,
+        name: t("nav.uiElements"),
+        subItems: [
+          { name: t("nav.alerts"), path: "/alerts", pro: false },
+          { name: t("nav.avatars"), path: "/avatars", pro: false },
+          { name: t("nav.badge"), path: "/badge", pro: false },
+          { name: t("nav.buttons"), path: "/buttons", pro: false },
+          { name: t("nav.images"), path: "/images", pro: false },
+          { name: t("nav.videos"), path: "/videos", pro: false },
+        ],
+      },
+      {
+        icon: <PlugInIcon />,
+        name: t("nav.auth"),
+        subItems: [
+          { name: t("nav.signIn"), path: "/signin", pro: false },
+          { name: t("nav.signUp"), path: "/signup", pro: false },
+        ],
+      },
+    ],
+    [t]
+  );
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -132,7 +170,7 @@ const AppSidebar: React.FC = () => {
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200  ${
+                  className={`ms-auto w-5 h-5 transition-transform duration-200  ${
                     openSubmenu?.type === menuType &&
                     openSubmenu?.index === index
                       ? "rotate-180 text-brand-500"
@@ -177,7 +215,7 @@ const AppSidebar: React.FC = () => {
                     : "0px",
               }}
             >
-              <ul className="mt-2 space-y-1 ml-9">
+              <ul className="mt-2 space-y-1 ms-9">
                 {nav.subItems.map((subItem) => (
                   <li key={subItem.name}>
                     <Link
@@ -189,10 +227,10 @@ const AppSidebar: React.FC = () => {
                       }`}
                     >
                       {subItem.name}
-                      <span className="flex items-center gap-1 ml-auto">
+                      <span className="flex items-center gap-1 ms-auto">
                         {subItem.new && (
                           <span
-                            className={`ml-auto ${
+                            className={`ms-auto ${
                               isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
@@ -203,7 +241,7 @@ const AppSidebar: React.FC = () => {
                         )}
                         {subItem.pro && (
                           <span
-                            className={`ml-auto ${
+                            className={`ms-auto ${
                               isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
@@ -240,7 +278,7 @@ const AppSidebar: React.FC = () => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
     ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+      const items = menuType === "main" ? mainNav : othersNav;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -260,7 +298,7 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [pathname,isActive]);
+  }, [pathname, isActive, mainNav, othersNav]);
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened
@@ -290,7 +328,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 start-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-e border-gray-200 
         ${
           isExpanded || isMobileOpen
             ? "w-[290px]"
@@ -353,7 +391,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(mainNav, "main")}
             </div>
 
             <div className="">
@@ -370,7 +408,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots />
                 )}
               </h2>
-              {renderMenuItems(othersItems, "others")}
+              {renderMenuItems(othersNav, "others")}
             </div>
           </div>
         </nav>

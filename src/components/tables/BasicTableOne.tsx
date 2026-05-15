@@ -10,6 +10,23 @@ import {
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 
+/** Same bordered, non-transparent table shell used by the demo table — reuse on admin data pages. */
+export function BasicTableSurface({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] ${className}`}
+    >
+      <div className="max-w-full overflow-x-auto">{children}</div>
+    </div>
+  );
+}
+
 interface Order {
   id: number;
   user: {
@@ -113,9 +130,8 @@ const tableData: Order[] = [
 
 export default function BasicTableOne() {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <div className="max-w-full overflow-x-auto">
-        <div className="min-w-[1102px]">
+    <BasicTableSurface>
+      <div className="min-w-[1102px]">
           <Table>
             {/* Table Header */}
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
@@ -219,8 +235,7 @@ export default function BasicTableOne() {
               ))}
             </TableBody>
           </Table>
-        </div>
       </div>
-    </div>
+    </BasicTableSurface>
   );
 }

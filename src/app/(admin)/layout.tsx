@@ -15,10 +15,10 @@ export default function AdminLayout({
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
-    ? "ml-0"
+    ? "ms-0"
     : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+    ? "lg:ms-[290px]"
+    : "lg:ms-[90px]";
 
   return (
     <div className="min-h-screen xl:flex">
@@ -27,7 +27,7 @@ export default function AdminLayout({
       <Backdrop />
       {/* Main Content Area */}
       <div
-        className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
+        className={`flex-1 min-h-screen bg-gray-50 transition-all duration-300 ease-in-out dark:bg-gray-900 ${mainContentMargin}`}
       >
         {/* Header */}
         <AppHeader />

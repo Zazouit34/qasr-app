@@ -1,29 +1,33 @@
+"use client";
+
 import Link from "next/link";
 import React from "react";
+import { useI18n } from "@/context/I18nContext";
 
 interface BreadcrumbProps {
-  pageTitle: string;
+  /** Plain text title (supports dynamic strings from data). */
+  pageTitle?: string;
+  /** Message key under `titles.*` in messages JSON — works from Server Components parent. */
+  titleKey?: string;
 }
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
+const PageBreadCrumb: React.FC<BreadcrumbProps> = ({ pageTitle, titleKey }) => {
+  const { t } = useI18n();
+  const resolved = titleKey ? t(titleKey) : pageTitle ?? "";
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-      <h2
-        className="text-xl font-semibold text-gray-800 dark:text-white/90"
-        x-text="pageName"
-      >
-        {pageTitle}
-      </h2>
-      <nav>
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">{resolved}</h2>
+      <nav aria-label="Breadcrumb">
         <ol className="flex items-center gap-1.5">
           <li>
             <Link
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
               href="/"
             >
-              Home
+              {t("common.home")}
               <svg
-                className="stroke-current"
+                className="stroke-current rtl:rotate-180"
                 width="17"
                 height="16"
                 viewBox="0 0 17 16"
@@ -40,13 +44,11 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
               </svg>
             </Link>
           </li>
-          <li className="text-sm text-gray-800 dark:text-white/90">
-            {pageTitle}
-          </li>
+          <li className="text-sm text-gray-800 dark:text-white/90">{resolved}</li>
         </ol>
       </nav>
     </div>
   );
 };
 
-export default PageBreadcrumb;
+export default PageBreadCrumb;

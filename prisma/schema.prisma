@@ -1,0 +1,622 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  role          Role      @default(STAFF)
+  avatar        String?
+  phone         String?
+  isActive      Boolean   @default(true)
+  venueId       String
+  venue         Venue     @relation(fields: [venueId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  activityLogs  ActivityLog[]
+  userVenues    UserVenue[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  VENUE_ADMIN
+  STAFF
+  ACCOUNTANT
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── VENUE ───────────────────────────────────────────────────────────────────
+
+model Venue {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  address       String
+  city          String
+  wilaya        String
+  phone         String
+  email         String
+  logoUrl       String?
+  coverUrl      String?
+  capacity      Int
+  description   String?   @db.Text
+  bankAccount   String?
+  taxId         String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  users         User[]
+  halls         Hall[]
+  clients       Client[]
+  events        Event[]
+  services      Service[]
+  amenities     Amenity[]
+  payments      Payment[]
+  expenses      Expense[]
+  contracts     Contract[]
+  packages      Package[]
+  staffMembers   StaffMember[]
+  settings       VenueSettings?
+  menuTemplates  MenuTemplate[]
+  quotes         Quote[]
+  userVenues     UserVenue[]
+}
+
+model VenueSettings {
+  id                     String  @id @default(cuid())
+  venueId                String  @unique
+  venue                  Venue   @relation(fields: [venueId], references: [id])
+  defaultDepositPct      Int     @default(30)
+  cancellationPolicyDays Int     @default(30)
+  workingHoursStart      String  @default("09:00")
+  workingHoursEnd        String  @default("23:00")
+  currency               String  @default("DZD")
+  language               String  @default("fr")
+  notifyOnNewBooking     Boolean @default(true)
+  notifyOnPayment        Boolean @default(true)
+  smsEnabled             Boolean @default(false)
+
+  onboardingVenueCompletedAt     DateTime?
+  onboardingHallsCompletedAt      DateTime?
+  onboardingServicesSkippedAt     DateTime?
+  onboardingServicesCompletedAt    DateTime?
+  onboardingMenusSkippedAt        DateTime?
+  onboardingMenusCompletedAt       DateTime?
+  onboardingAmenitiesCompletedAt  DateTime?
+  onboardingPackageSkippedAt      DateTime?
+  onboardingPackageCompletedAt    DateTime?
+  onboardingFinishedAt          DateTime?
+}
+
+model Hall {
+  id           String   @id @default(cuid())
+  venueId      String
+  venue        Venue    @relation(fields: [venueId], references: [id])
+  name         String
+  capacity     Int
+  pricePerHour Float?
+  pricePerDay  Float?
+  description  String?
+  photos       String[]
+  isActive     Boolean  @default(true)
+  events       Event[]
+  createdAt    DateTime @default(now())
+}
+
+model Client {
+  id         String       @id @default(cuid())
+  venueId    String
+  venue      Venue        @relation(fields: [venueId], references: [id])
+  firstName  String
+  lastName   String
+  phone      String
+  phone2     String?
+  email      String?
+  address    String?
+  wilaya     String?
+  nationalId String?
+  notes      String?      @db.Text
+  source     ClientSource @default(WALK_IN)
+  isVIP      Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  events     Event[]
+  documents  Document[]
+  quotes     Quote[]
+}
+
+enum ClientSource {
+  WALK_IN
+  REFERRAL
+  SOCIAL_MEDIA
+  PHONE
+  WEBSITE
+  OTHER
+}
+
+model Event {
+  id                 String            @id @default(cuid())
+  venueId            String
+  venue              Venue             @relation(fields: [venueId], references: [id])
+  clientId           String
+  client             Client            @relation(fields: [clientId], references: [id])
+  hallId             String?
+  hall               Hall?             @relation(fields: [hallId], references: [id])
+  eventNumber        String            @unique
+  type               EventType
+  status             EventStatus       @default(INQUIRY)
+  title              String
+  eventDate          DateTime
+  startTime          String
+  endTime            String
+  guestCount         Int
+  groomName          String?
+  brideName          String?
+  groomPhone         String?
+  bridePhone         String?
+  basePrice          Float
+  totalPrice         Float
+  discountAmount     Float             @default(0)
+  discountReason     String?
+  notes              String?           @db.Text
+  internalNotes      String?           @db.Text
+  contractSigned     Boolean           @default(false)
+  contractDate       DateTime?
+  confirmedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  payments           Payment[]
+  services           EventService[]
+  amenities          EventAmenity[]
+  contracts          Contract[]
+  documents          Document[]
+  reminders          Reminder[]
+  checklist          ChecklistItem[]
+  assignments        EventAssignment[]
+  menuTemplate       MenuTemplate?    @relation(fields: [menuTemplateId], references: [id])
+  menuTemplateId     String?
+  quotes             Quote[]
+  expenses           Expense[]
+  guestAccess        EventGuestAccess?
+}
+
+enum EventType {
+  WEDDING
+  ENGAGEMENT
+  BIRTHDAY
+  CORPORATE
+  BAPTISM
+  ANNIVERSARY
+  OTHER
+}
+
+enum EventStatus {
+  INQUIRY
+  QUOTE_SENT
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Service {
+  id          String          @id @default(cuid())
+  venueId     String
+  venue       Venue           @relation(fields: [venueId], references: [id])
+  name        String
+  nameAr      String?
+  description String?
+  price       Float
+  priceType   PriceType       @default(FIXED)
+  unit        String?
+  category    ServiceCategory
+  isActive    Boolean         @default(true)
+  events      EventService[]
+}
+
+enum ServiceCategory {
+  CATERING
+  MUSIC
+  PHOTO_VIDEO
+  DECORATION
+  CAKE
+  FLOWERS
+  LIGHTING
+  TRANSPORT
+  BEAUTY
+  HOSTING
+  SECURITY
+  CLEANING
+  OTHER
+}
+
+enum PriceType {
+  FIXED
+  PER_PERSON
+  PER_HOUR
+  NEGOTIABLE
+}
+
+model EventService {
+  id         String        @id @default(cuid())
+  eventId    String
+  event      Event         @relation(fields: [eventId], references: [id])
+  serviceId  String
+  service    Service       @relation(fields: [serviceId], references: [id])
+  quantity   Int           @default(1)
+  unitPrice  Float
+  totalPrice Float
+  notes      String?
+  status     ServiceStatus @default(INCLUDED)
+}
+
+enum ServiceStatus {
+  INCLUDED
+  CONFIRMED
+  CANCELLED
+  EXTERNAL
+}
+
+model Amenity {
+  id         String         @id @default(cuid())
+  venueId    String
+  venue      Venue          @relation(fields: [venueId], references: [id])
+  name       String
+  nameAr     String?
+  icon       String?
+  isIncluded Boolean        @default(true)
+  extraPrice Float?
+  isActive   Boolean        @default(true)
+  sortOrder  Int            @default(0)
+  events     EventAmenity[]
+}
+
+model EventAmenity {
+  id        String  @id @default(cuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id])
+  amenityId String
+  amenity   Amenity @relation(fields: [amenityId], references: [id])
+  notes     String?
+}
+
+model Package {
+  id          String        @id @default(cuid())
+  venueId     String
+  venue       Venue         @relation(fields: [venueId], references: [id])
+  name        String
+  description String?
+  basePrice   Float
+  minGuests   Int?
+  maxGuests   Int?
+  isActive    Boolean       @default(true)
+  items       PackageItem[]
+}
+
+model PackageItem {
+  id         String  @id @default(cuid())
+  packageId  String
+  package    Package @relation(fields: [packageId], references: [id])
+  label      String
+  isIncluded Boolean @default(true)
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  venueId       String
+  venue         Venue         @relation(fields: [venueId], references: [id])
+  eventId       String
+  event         Event         @relation(fields: [eventId], references: [id])
+  paymentNumber String        @unique
+  amount        Float
+  type          PaymentType
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  dueDate       DateTime?
+  paidAt        DateTime?
+  reference     String?
+  receiptUrl    String?
+  notes         String?
+  recordedBy    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum PaymentType {
+  DEPOSIT
+  INSTALLMENT
+  FINAL_BALANCE
+  REFUND
+  PENALTY
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  CCP
+  MOBILE_PAYMENT
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  venueId     String
+  venue       Venue           @relation(fields: [venueId], references: [id])
+  eventId     String?
+  event       Event?          @relation(fields: [eventId], references: [id])
+  category    ExpenseCategory
+  description String
+  amount      Float
+  date        DateTime
+  vendor      String?
+  receiptUrl  String?
+  notes       String?
+  createdAt   DateTime        @default(now())
+}
+
+enum ExpenseCategory {
+  STAFF_SALARY
+  UTILITIES
+  MAINTENANCE
+  SUPPLIES
+  MARKETING
+  RENT
+  TAXES
+  VENDOR_PAYMENT
+  OTHER
+}
+
+model StaffMember {
+  id          String            @id @default(cuid())
+  venueId     String
+  venue       Venue             @relation(fields: [venueId], references: [id])
+  name        String
+  role        String
+  phone       String
+  email       String?
+  salary      Float?
+  joinDate    DateTime
+  isActive    Boolean           @default(true)
+  notes       String?
+  assignments EventAssignment[]
+}
+
+model UserVenue {
+  userId  String
+  venueId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue   Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@id([userId, venueId])
+}
+
+model MenuTemplate {
+  id          String               @id @default(cuid())
+  venueId     String
+  venue       Venue                @relation(fields: [venueId], references: [id])
+  name        String
+  description String?             @db.Text
+  basePrice   Float?
+  sortOrder   Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  items       MenuTemplateItem[]
+  groceryItems MenuGroceryLine[]
+  events      Event[]
+}
+
+model MenuTemplateItem {
+  id             String       @id @default(cuid())
+  menuTemplateId String
+  menuTemplate   MenuTemplate @relation(fields: [menuTemplateId], references: [id], onDelete: Cascade)
+  label          String
+  qty            String?
+  notes          String?
+  sortOrder      Int          @default(0)
+}
+
+model MenuGroceryLine {
+  id             String       @id @default(cuid())
+  menuTemplateId String
+  menuTemplate   MenuTemplate @relation(fields: [menuTemplateId], references: [id], onDelete: Cascade)
+  ingredient     String
+  approxQty      String?
+  unit           String?
+  note           String?
+  sortOrder      Int          @default(0)
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model Quote {
+  id                String       @id @default(cuid())
+  venueId           String
+  venue             Venue        @relation(fields: [venueId], references: [id])
+  clientId          String
+  client            Client       @relation(fields: [clientId], references: [id])
+  eventId           String?
+  event             Event?       @relation(fields: [eventId], references: [id])
+  quoteNumber       String       @unique
+  status            QuoteStatus  @default(DRAFT)
+  lineItems         Json
+  total             Float
+  notes             String?      @db.Text
+  title             String?
+  proposalEventDate DateTime?
+  proposalHallId    String?
+  proposalGuests    Int?
+  validUntil        DateTime?
+  sentAt            DateTime?
+  acceptedAt        DateTime?
+  acceptanceToken   String       @unique
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model EventGuestAccess {
+  id        String    @id @default(cuid())
+  eventId   String    @unique
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model EventAssignment {
+  id            String      @id @default(cuid())
+  eventId       String
+  event         Event       @relation(fields: [eventId], references: [id])
+  staffMemberId String
+  staffMember   StaffMember @relation(fields: [staffMemberId], references: [id])
+  role          String
+  notes         String?
+}
+
+model Contract {
+  id         String         @id @default(cuid())
+  venueId    String
+  venue      Venue          @relation(fields: [venueId], references: [id])
+  eventId    String
+  event      Event          @relation(fields: [eventId], references: [id])
+  fileUrl    String?
+  templateId String?
+  status     ContractStatus @default(DRAFT)
+  signedAt   DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime       @default(now())
+}
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  EXPIRED
+  CANCELLED
+}
+
+model Document {
+  id        String       @id @default(cuid())
+  clientId  String?
+  client    Client?      @relation(fields: [clientId], references: [id])
+  eventId   String?
+  event     Event?       @relation(fields: [eventId], references: [id])
+  type      DocumentType
+  name      String
+  url       String
+  createdAt DateTime     @default(now())
+}
+
+enum DocumentType {
+  ID_CARD
+  CONTRACT
+  RECEIPT
+  QUOTE
+  INVOICE
+  PHOTO
+  OTHER
+}
+
+model Reminder {
+  id        String       @id @default(cuid())
+  eventId   String
+  event     Event        @relation(fields: [eventId], references: [id])
+  type      ReminderType
+  message   String
+  dueDate   DateTime
+  isDone    Boolean      @default(false)
+  createdAt DateTime     @default(now())
+}
+
+enum ReminderType {
+  PAYMENT_DUE
+  CONTRACT_SIGNING
+  FINAL_HEADCOUNT
+  MENU_CONFIRMATION
+  GENERAL
+}
+
+model ChecklistItem {
+  id        String    @id @default(cuid())
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id])
+  label     String
+  isDone    Boolean   @default(false)
+  dueDate   DateTime?
+  category  String?
+  order     Int       @default(0)
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  details   Json?
+  createdAt DateTime @default(now())
+}
