@@ -23,7 +23,7 @@ export default function AmenitiesPage() {
         title={
           <span className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-brand-500" aria-hidden />
-            Liste Equipements
+            Liste des équipements
           </span>
         }
         desc="Icônes indicative selon le libellé (Wi‑Fi, parking, restauration, etc.)."
